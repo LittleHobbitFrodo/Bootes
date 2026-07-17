@@ -1,0 +1,12 @@
+#[target.x86_64-unknown-uefi]
+#rustflags = [
+#    "-C", "link-arg=-Tlink.x"
+    #"-C", "link-arg=-T",
+    #"-C", "link-args=linker.ld",
+#]
+
+#[target.aarch64-unknown-uefi]
+#rustflags = [
+#    "-C", "link-arg=-T",
+#    "-C", "link-args=linker.ld",
+#]
