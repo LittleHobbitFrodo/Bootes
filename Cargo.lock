@@ -26,7 +26,7 @@ version = "0.1.0"
 dependencies = [
  "goblin",
  "libelf",
- "libequinox",
+ "libpages",
  "uefi",
 ]
 
@@ -46,8 +46,22 @@ name = "libelf"
 version = "0.1.0"
 
 [[package]]
-name = "libequinox"
+name = "liblock"
 version = "0.1.0"
+
+[[package]]
+name = "libmem"
+version = "0.1.0"
+dependencies = [
+ "liblock",
+]
+
+[[package]]
+name = "libpages"
+version = "0.1.0"
+dependencies = [
+ "libmem",
+]
 
 [[package]]
 name = "log"

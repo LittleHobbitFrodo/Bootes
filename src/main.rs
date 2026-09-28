@@ -7,19 +7,19 @@ mod boot_info;
 
 pub mod kernel_binary;
 
+//use libpages::{PageTable, PdptEntry, Pml4Entry, PtEntry, PtKernelBits};
 use uefi::{allocator::Allocator, boot::{AllocateType, allocate_pages}};
 
 #[global_allocator]
 static ALLOCATOR: Allocator = Allocator;
 
-use libequinox::mem::alloc::*;
 use uefi::{print, println};
 
 use core::{num::NonZero, panic::PanicInfo, ptr::NonNull, time::Duration};
 
 use uefi::{boot::{MemoryAttribute, MemoryType, get_handle_for_protocol, stall}, mem::memory_map::MemoryMap, prelude::*};
 
-use libelf::api::HeaderEntryType;
+use libelf::{Elf64, api::{ElfParseError, HeaderEntryType}};
 
 use crate::kernel_binary::KERNEL_BINARY;
 
@@ -31,40 +31,41 @@ fn main() -> Status {
         panic!("failed to initialize UEFI helpers: {}", e);
     }
 
+    let elf = match Elf64::parse(&KERNEL_BINARY.data) {
+        Ok(elf) => elf,
+        Err(e) => panic!("ELF file parsing failed: {e:?}"),
+    };
 
-    println!("kernel binary ptr: {:p}", (&KERNEL_BINARY.data) as *const u8);
-
-    match libelf::Elf64::parse(&KERNEL_BINARY.data) {
-        Ok(e) => {
-
-            for header in e.program_headers() {
-                if header.is_loadable() {
-                    println!("    loading segment: {header:?}");
-
-                    let pages = match allocate_pages(AllocateType::Address(header.virtual_address().as_ptr() as usize as u64), MemoryType::LOADER_DATA, header.size_in_memory()/4096 + 1) {
-                        Ok(allocated) => allocated,
-                        Err(e) => {
-                            println!("allocation failed: {e}");
-                            panic!("allocation failed");
-                        },
-                    };
-
-                    println!("allocated: {:p}, expected: {:p}", pages, header.virtual_address());
-
-
-                } else {
-                    println!("    segment is not loadable");
-                }
-            }
-
-        },
-        Err(e) => println!("libelf returned error: {e:?}"),
+    for head in elf.program_headers() {
+        println!("Header:");
+        println!("    type: {:?}", head.entry_type());
+        println!("    flags: {:?}, loadable: {}, {:?}", head.flags(), head.is_loadable(), head.permissions());
     }
+
+
+
+    /*let pml4 = unsafe { allocate_table().cast::<PageTable<Pml4Entry>>().as_mut() };
+
+    let pdpt = unsafe { allocate_table().cast::<PageTable<PdptEntry>>().as_mut() };*/
+
+
 
 
     loop {
         boot::stall(Duration::from_secs(1));
     }
+}
+
+
+fn allocate_table() -> NonNull<[u64; 512]> {
+    let page = match boot::allocate_pages(AllocateType::AnyPages, MemoryType::LOADER_DATA, 1) {
+        Ok(page) => page.cast::<[u64; 512]>(),
+        Err(e) => panic!("allocation failed: {e}"),
+    };
+
+    unsafe { page.write_bytes(0, size_of::<[u64; 512]>()) }
+
+    page
 }
 
 #[panic_handler]

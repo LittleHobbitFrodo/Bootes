@@ -1,14 +1,18 @@
 [package]
-name = "equinox"
+name = "Bootes"
 version = "0.1.0"
 edition = "2024"
-description="The bootloader for cronos"
+description="The bootloader for Consteallation"
 licence="MIT"
 
 [dependencies]
 uefi = "0.38.0"
-libequinox = { path="../lib/libequinox", version = "0.1.0" }
+
+#libequinox = { path="../libequinox", version = "0.1.0" }
+
 libelf = { path="../lib/libelf", version = "0.1.0" }
+libpages = { path="../lib/libpages", version = "0.1.0" }
+
 goblin = { version = "0.10.7", features = ["elf64", "elf32", "endian_fd"], default-features = false }
 
 #ministd = { path="../../ministd", version = "0.1.0", features = ["testing"] }
